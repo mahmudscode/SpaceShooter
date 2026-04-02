@@ -1,0 +1,50 @@
+cmake_minimum_required(VERSION 3.10)
+project(SpaceShooter CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Release build flags
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+
+# Source files
+set(SOURCES
+    src/main.cpp
+    src/GameLogic.cpp
+    src/Renderer.cpp
+)
+
+add_executable(SpaceShooter ${SOURCES})
+
+target_include_directories(SpaceShooter PRIVATE include)
+
+# ── SDL2 ──────────────────────────────────────────────────────────────────────
+find_package(SDL2 REQUIRED)
+if(TARGET SDL2::SDL2)
+    target_link_libraries(SpaceShooter PRIVATE SDL2::SDL2 SDL2::SDL2main)
+else()
+    target_include_directories(SpaceShooter PRIVATE ${SDL2_INCLUDE_DIRS})
+    target_link_libraries(SpaceShooter PRIVATE ${SDL2_LIBRARIES})
+endif()
+
+# ── OpenGL ───────────────────────────────────────────────────────────────────
+find_package(OpenGL REQUIRED)
+target_link_libraries(SpaceShooter PRIVATE OpenGL::GL)
+
+# ── Platform specifics ────────────────────────────────────────────────────────
+if(WIN32)
+    # Windows: link against opengl32, ensure console/window subsystem handled by SDL2main
+    target_link_libraries(SpaceShooter PRIVATE opengl32)
+    # Use WinMain entry point so no console window appears
+    set_target_properties(SpaceShooter PROPERTIES WIN32_EXECUTABLE TRUE)
+elseif(APPLE)
+    # macOS
+    find_library(COCOA_LIB Cocoa)
+    target_link_libraries(SpaceShooter PRIVATE ${COCOA_LIB})
+else()
+    # Linux
+    target_link_libraries(SpaceShooter PRIVATE GL m)
+endif()
