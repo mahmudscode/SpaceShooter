@@ -1,4 +1,13 @@
-
+// =============================================================================
+//  SpaceShooter — Application Entry Point
+// =============================================================================
+//
+//  AUTHOR         : Tripty
+//                   [ SDL2 Window Management & Main Game Loop ]
+//
+//  Prime Author   : Mahmudur Rahman  (Renderer.cpp)
+//  Contributors   : Era (GameLogic.cpp) · Mitu (Game.h) · PK (Build)
+// =============================================================================
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
@@ -87,6 +96,16 @@ int main(int argc, char *argv[])
                     game.keyRight = true;
                     game.keyD = true;
                 }
+                if (k == SDLK_UP || k == SDLK_w)
+                {
+                    game.keyUp = true;
+                    game.keyW = true;
+                }
+                if (k == SDLK_DOWN || k == SDLK_s)
+                {
+                    game.keyDown = true;
+                    game.keyS = true;
+                }
                 if (k == SDLK_SPACE)
                     game.keySpace = true;
                 if (k == SDLK_ESCAPE)
@@ -144,6 +163,16 @@ int main(int argc, char *argv[])
                 {
                     game.keyRight = false;
                     game.keyD = false;
+                }
+                if (k == SDLK_UP || k == SDLK_w)
+                {
+                    game.keyUp = false;
+                    game.keyW = false;
+                }
+                if (k == SDLK_DOWN || k == SDLK_s)
+                {
+                    game.keyDown = false;
+                    game.keyS = false;
                 }
                 if (k == SDLK_SPACE)
                     game.keySpace = false;

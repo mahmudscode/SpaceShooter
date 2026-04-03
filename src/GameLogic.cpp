@@ -1,4 +1,13 @@
-
+// =============================================================================
+//  SpaceShooter — Game Logic
+// =============================================================================
+//
+//  AUTHOR         : Era
+//                   [ Physics, Collision Detection & Game State ]
+//
+//  Prime Author   : Mahmudur Rahman  (Renderer.cpp)
+//  Contributors   : Mitu (Game.h) · Tripty (main.cpp) · PK (Build)
+// =============================================================================
 
 #include "Game.h"
 #include <cmath>
@@ -113,6 +122,7 @@ void spawnEnemy(GameData &g, bool boss = false)
     e.isBoss = boss;
     e.zigzagTimer = 0;
     e.diveTimer = l.enemyDive ? g.randF(60, 180) : 99999;
+    e.shootTimer = (int)g.randF(60, 180); // stagger first shot per enemy
     g.enemies.push_back(e);
 }
 
@@ -183,6 +193,11 @@ void updateGame(GameData &g)
         g.player.x -= g.player.speed;
     if ((g.keyRight || g.keyD) && g.player.x < W - 22)
         g.player.x += g.player.speed;
+    // Vertical: player can move in lower 55% of screen (stays in H*0.45 .. H-30)
+    if ((g.keyUp || g.keyW) && g.player.y > H * 0.45f)
+        g.player.y -= g.player.speed;
+    if ((g.keyDown || g.keyS) && g.player.y < H - 30.0f)
+        g.player.y += g.player.speed;
     if (g.keySpace)
         shoot(g);
 
@@ -190,18 +205,19 @@ void updateGame(GameData &g)
     if (g.player.thrustAnim > 6.2832f)
         g.player.thrustAnim -= 6.2832f;
 
-    // ── Bullets (player) ──────────────────────────────────────────────────
+    // ── Bullets ───────────────────────────────────────────────────────────
     for (auto &b : g.bullets)
     {
         if (b.isEnemy)
         {
-            b.y -= b.vy;
-        } // vy negative for player, positive for enemy
+            b.x += b.vx; // aimed direction
+            b.y += b.vy;
+        }
         else
         {
-            b.y += b.vy;
-        } // b.vy is already negative for player
-        if (b.y < -10 || b.y > H + 10)
+            b.y += b.vy; // vy is negative (upward) for player bullets
+        }
+        if (b.y < -10 || b.y > H + 10 || b.x < -10 || b.x > W + 10)
             b.active = false;
     }
 
@@ -210,15 +226,58 @@ void updateGame(GameData &g)
     int onScreen = (int)g.enemies.size();
     if (g.frameCount % spawnRate == 0 && onScreen < l.maxEnemies)
     {
-        // Boss check
-        bool boss = (l.bossEveryN > 0 && g.killCount > 0 && g.killCount % l.bossEveryN == 0 && g.enemies.empty()); // spawn boss when screen is clear
+        bool boss = (l.bossEveryN > 0 && g.killCount > 0 && g.killCount % l.bossEveryN == 0 && g.enemies.empty());
         spawnEnemy(g, boss);
     }
+
+    // ── Per-level enemy fire rate ─────────────────────────────────────────
+    // Base cooldown between shots (frames). Lower = faster fire.
+    // Easy: enemies shoot rarely and slowly. Hard lv10: rapid aimed fire.
+    float baseFireRate = 0.0f; // 0 = never (Easy lv1-2)
+    if (g.difficulty == Difficulty::EASY)
+    {
+        // Easy: only levels 5+ shoot, slowly
+        if (g.level >= 9)
+            baseFireRate = 1.0f;
+        else if (g.level >= 7)
+            baseFireRate = 0.6f;
+        else if (g.level >= 5)
+            baseFireRate = 0.35f;
+    }
+    else if (g.difficulty == Difficulty::MEDIUM)
+    {
+        if (g.level >= 9)
+            baseFireRate = 1.8f;
+        else if (g.level >= 7)
+            baseFireRate = 1.3f;
+        else if (g.level >= 5)
+            baseFireRate = 0.9f;
+        else if (g.level >= 3)
+            baseFireRate = 0.55f;
+        else
+            baseFireRate = 0.3f;
+    }
+    else
+    { // HARD
+        if (g.level >= 9)
+            baseFireRate = 2.8f;
+        else if (g.level >= 7)
+            baseFireRate = 2.2f;
+        else if (g.level >= 5)
+            baseFireRate = 1.6f;
+        else if (g.level >= 3)
+            baseFireRate = 1.0f;
+        else
+            baseFireRate = 0.6f;
+    }
+    // Bosses fire 2x as often
+    // baseFireRate is shots-per-second; convert to min frames between shots:
+    // minCooldown = 60 / baseFireRate  (0 rate = never)
 
     // ── Enemy update ──────────────────────────────────────────────────────
     for (auto &e : g.enemies)
     {
-        // Zigzag
+        // ── Movement ──────────────────────────────────────────────────────
         if (l.enemyZigzag)
         {
             e.zigzagTimer += 0.05f;
@@ -230,7 +289,6 @@ void updateGame(GameData &g)
                 e.vx *= -1.0f;
         }
 
-        // Dive at player
         if (l.enemyDive && !e.isBoss)
         {
             e.diveTimer--;
@@ -246,7 +304,6 @@ void updateGame(GameData &g)
         e.x += e.vx;
         e.y += e.vy;
 
-        // Clamp x
         if (e.x < 18)
         {
             e.x = 18;
@@ -258,7 +315,6 @@ void updateGame(GameData &g)
             e.vx = -std::abs(e.vx);
         }
 
-        // Escaped past bottom
         if (e.y > H + 30)
         {
             e.active = false;
@@ -266,16 +322,53 @@ void updateGame(GameData &g)
                 g.lives--;
         }
 
-        // Bosses fire bullets on hard/medium level 7+
-        if (e.isBoss && g.frameCount % 60 == 0 && (g.difficulty != Difficulty::EASY) && g.level >= 7)
-        {
-            Bullet eb;
-            eb.x = e.x;
-            eb.y = e.y + 10;
-            eb.vy = -2.5f; // positive = downward (rendered via isEnemy flag)
-            eb.isEnemy = true;
-            eb.active = true;
-            g.bullets.push_back(eb);
+        // ── Enemy shooting — aimed at player ──────────────────────────────
+        if (baseFireRate > 0.0f && e.y > 0)
+        { // only shoot when on screen
+            e.shootTimer--;
+            if (e.shootTimer <= 0)
+            {
+                // Aim vector toward player
+                float dx = g.player.x - e.x;
+                float dy = g.player.y - e.y;
+                float dist = std::sqrt(dx * dx + dy * dy);
+                if (dist < 1.0f)
+                    dist = 1.0f;
+
+                // Bullet speed: bosses fire faster; harder difficulty = faster
+                float bspd = e.isBoss ? 3.8f : 2.6f;
+                if (g.difficulty == Difficulty::HARD)
+                    bspd *= 1.25f;
+                if (g.difficulty == Difficulty::EASY)
+                    bspd *= 0.8f;
+
+                // Normalize direction and apply speed
+                float bvx = (dx / dist) * bspd;
+                float bvy = (dy / dist) * bspd;
+
+                // Bosses fire a 3-way spread
+                int shots = e.isBoss ? 3 : 1;
+                for (int s = 0; s < shots; s++)
+                {
+                    float spreadAngle = (shots == 1) ? 0.0f
+                                                     : (s - 1) * 0.28f; // -0.28, 0, +0.28 radians
+                    float ca = std::cos(spreadAngle), sa = std::sin(spreadAngle);
+                    Bullet eb;
+                    eb.x = e.x;
+                    eb.y = e.y + 10;
+                    // Rotate velocity by spread angle
+                    eb.vx = bvx * ca - bvy * sa;
+                    eb.vy = bvx * sa + bvy * ca; // will be used as-is in update
+                    eb.isEnemy = true;
+                    eb.active = true;
+                    g.bullets.push_back(eb);
+                }
+
+                // Reset shoot timer with some randomness so enemies don't fire in sync
+                float fireRate = baseFireRate * (e.isBoss ? 2.0f : 1.0f);
+                float minFrames = 60.0f / fireRate;
+                e.shootTimer = (int)g.randF(minFrames * 0.7f, minFrames * 1.4f);
+            }
         }
     }
 

@@ -1,4 +1,13 @@
-
+// =============================================================================
+//  SpaceShooter — Core Data Architecture
+// =============================================================================
+//
+//  AUTHOR         : Mitu
+//                   [ Data Structures & Engine Architecture ]
+//
+//  Prime Author   : Mahmudur Rahman  (Renderer.cpp)
+//  Contributors   : Era (GameLogic.cpp) · Tripty (main.cpp) · PK (Build)
+// =============================================================================
 #pragma once
 #include <vector>
 #include <string>
@@ -58,9 +67,10 @@ struct Star
 struct Bullet
 {
     float x, y;
-    float vy = -9.0f;
+    float vx = 0.0f;  // horizontal velocity (used by aimed enemy bullets)
+    float vy = -9.0f; // vertical velocity (negative = upward for player)
     bool active = true;
-    bool isEnemy = false; // enemy bullets (hard mode high levels)
+    bool isEnemy = false;
 };
 
 struct Enemy
@@ -70,6 +80,7 @@ struct Enemy
     float phase;
     float zigzagTimer = 0;
     float diveTimer = 0;
+    float shootTimer = 0; // frames until this enemy fires next
     int hp = 1;
     int maxHp = 1;
     bool active = true;
@@ -127,7 +138,9 @@ struct GameData
 
     // Input
     bool keyLeft = false, keyRight = false, keySpace = false;
+    bool keyUp = false, keyDown = false;
     bool keyA = false, keyD = false;
+    bool keyW = false, keyS = false;
 
     std::mt19937 rng;
     GameData() : rng(std::random_device{}()) {}

@@ -1,3 +1,30 @@
+// =============================================================================
+//  SpaceShooter — OpenGL Renderer
+// =============================================================================
+//
+//  PRIMARY AUTHOR : Mahmudur Rahman
+//                   [ Core Graphics Engine, OpenGL Pipeline ]
+//                   Responsible for all visual rendering:
+//                     - Background, nebula & parallax star field
+//                     - Player ship geometry (hull, wings, cockpit, thrust)
+//                     - Alien saucer (dome, rotating lights, tractor beam)
+//                     - Bullet glow trails (additive blending)
+//                     - Explosion particle system
+//                     - HUD (score, level, lives / hearts)
+//                     - Menu & Game Over overlay screens
+//                     - Pixel-art geometric font (no external library)
+//                     - Letterbox viewport scaling
+//
+//  Project        : Space Shooter C++/OpenGL
+//  File           : src/Renderer.cpp
+//  Description    : Full OpenGL 2.1 fixed-pipeline renderer.
+//                   No shaders, no textures — pure geometry & blending.
+//
+//  Contributors   : Era       (GameLogic.cpp — physics & collision)
+//                   Mitu      (Game.h / Renderer.h — data architecture)
+//                   Tripty    (main.cpp — SDL2 window & game loop)
+//                   PK        (CMakeLists.txt / Makefile — build system)
+// =============================================================================
 
 #include "Renderer.h"
 #include "Game.h"
@@ -610,28 +637,51 @@ static void drawEnemy(const Enemy &e)
 static void drawBullet(const Bullet &b)
 {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    float r = b.isEnemy ? 1.0f : 0.0f;
-    float g = b.isEnemy ? 0.3f : 0.92f;
-    float bl = b.isEnemy ? 0.3f : 1.0f;
-    float y0 = b.y, y1 = b.isEnemy ? b.y + 14 : b.y - 14;
-    // Core
+    float r, g, bl;
+    float tx, ty; // trail tip (opposite direction of travel)
+    if (b.isEnemy)
+    {
+        r = 1.0f;
+        g = 0.25f;
+        bl = 0.1f;
+        // Normalise velocity for trail
+        float len = std::sqrt(b.vx * b.vx + b.vy * b.vy);
+        if (len < 0.01f)
+            len = 0.01f;
+        float nx = b.vx / len, ny = b.vy / len;
+        tx = b.x - nx * 14;
+        ty = b.y - ny * 14;
+    }
+    else
+    {
+        r = 0.0f;
+        g = 0.92f;
+        bl = 1.0f;
+        tx = b.x;
+        ty = b.y - 14;
+    }
+    float x0 = b.x, y0 = b.y;
+    // Core trail
     glBegin(GL_QUADS);
     glColor4f(r, g, bl, 1.0f);
-    glVertex2f(b.x - 1.5f, y0);
-    glVertex2f(b.x + 1.5f, y0);
+    glVertex2f(x0 - 1.5f, y0);
+    glVertex2f(x0 + 1.5f, y0);
     glColor4f(r, g, bl, 0.0f);
-    glVertex2f(b.x + 1.5f, y1);
-    glVertex2f(b.x - 1.5f, y1);
+    glVertex2f(tx + 1.5f, ty);
+    glVertex2f(tx - 1.5f, ty);
     glEnd();
     // Glow
     glBegin(GL_QUADS);
     glColor4f(r, g, bl, 0.3f);
-    glVertex2f(b.x - 3.5f, y0);
-    glVertex2f(b.x + 3.5f, y0);
+    glVertex2f(x0 - 3.5f, y0);
+    glVertex2f(x0 + 3.5f, y0);
     glColor4f(r, g, bl, 0.0f);
-    glVertex2f(b.x + 3.5f, y1);
-    glVertex2f(b.x - 3.5f, y1);
+    glVertex2f(tx + 3.5f, ty);
+    glVertex2f(tx - 3.5f, ty);
     glEnd();
+    // Bright tip dot
+    glColor4f(r, g, bl, 0.9f);
+    drawFilledCircle(x0, y0, b.isEnemy ? 2.8f : 2.0f);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
@@ -818,7 +868,7 @@ static void drawMenuScreen()
     cy += 52;
     drawCentered("ARROWS OR WASD TO MOVE", cy, 1.0f, 0.67f, 0.8f, 1.0f);
     cy += 18;
-    drawCentered("SPACE TO FIRE", cy, 1.0f, 0.67f, 0.8f, 1.0f);
+    drawCentered("UP DOWN TO DODGE  SPACE TO FIRE", cy, 1.0f, 0.67f, 0.8f, 1.0f);
     cy += 42;
     drawCentered("10 LEVELS  3 DIFFICULTIES", cy, 1.0f, 0.4f, 0.6f, 0.9f);
     cy += 18;
