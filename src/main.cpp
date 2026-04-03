@@ -1,6 +1,4 @@
-// SpaceShooter - C++ OpenGL version
-// Requires: SDL2, OpenGL
-// Build: see CMakeLists.txt or Makefile
+
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
@@ -9,18 +7,18 @@
 #include "Game.h"
 #include "Renderer.h"
 
-// Forward declarations from GameLogic.cpp
-void resetStars(GameData& g);
-void startGame(GameData& g);
-void updateGame(GameData& g);
-void updateMenuStars(GameData& g);
+void resetStars(GameData &g);
+void startGame(GameData &g);
+void updateGame(GameData &g);
+void updateMenuStars(GameData &g);
 
-static const int WIN_W = 840;  // 2x game width for crisp rendering
-static const int WIN_H = 1040; // 2x game height
+static const int WIN_W = 840;
+static const int WIN_H = 1040;
 
-int main(int argc, char* argv[]) {
-    // ── SDL2 init ─────────────────────────────────────────────────────────
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+int main(int argc, char *argv[])
+{
+    if (SDL_Init(SDL_INIT_VIDEO) != 0)
+    {
         SDL_Log("SDL_Init error: %s", SDL_GetError());
         return 1;
     }
@@ -30,84 +28,139 @@ int main(int argc, char* argv[]) {
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4); // MSAA 4x
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 
-    SDL_Window* window = SDL_CreateWindow(
+    SDL_Window *window = SDL_CreateWindow(
         "SPACE SHOOTER",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         WIN_W, WIN_H,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN
-    );
-    if (!window) {
-        SDL_Log("SDL_CreateWindow error: %s", SDL_GetError());
+        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+    if (!window)
+    {
+        SDL_Log("Window error: %s", SDL_GetError());
         SDL_Quit();
         return 1;
     }
 
     SDL_GLContext glCtx = SDL_GL_CreateContext(window);
-    if (!glCtx) {
-        SDL_Log("SDL_GL_CreateContext error: %s", SDL_GetError());
+    if (!glCtx)
+    {
+        SDL_Log("GL error: %s", SDL_GetError());
         SDL_DestroyWindow(window);
         SDL_Quit();
         return 1;
     }
 
-    SDL_GL_SetSwapInterval(1); // VSync
+    SDL_GL_SetSwapInterval(1);
 
-    // ── Game init ─────────────────────────────────────────────────────────
     GameData game;
     initRenderer();
     resetStars(game);
 
-    // ── Main loop ─────────────────────────────────────────────────────────
     bool running = true;
     SDL_Event event;
-    const float TARGET_FPS = 60.0f;
-    const float FRAME_TIME = 1000.0f / TARGET_FPS;
+    const float FRAME_TIME = 1000.0f / 60.0f;
 
-    while (running) {
+    while (running)
+    {
         Uint32 now = SDL_GetTicks();
 
-        // ── Events ────────────────────────────────────────────────────────
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+            {
                 running = false;
             }
-            else if (event.type == SDL_KEYDOWN) {
-                SDL_Keycode k = event.key.keysym.sym;
-                if (k == SDLK_LEFT  || k == SDLK_a) game.keyLeft  = true;
-                if (k == SDLK_RIGHT || k == SDLK_d) game.keyRight = true;
-                if (k == SDLK_a) game.keyA = true;
-                if (k == SDLK_d) game.keyD = true;
-                if (k == SDLK_SPACE) game.keySpace = true;
 
-                // Start / restart
-                if (k == SDLK_RETURN || k == SDLK_KP_ENTER) {
-                    if (game.state == GameState::MENU ||
-                        game.state == GameState::GAMEOVER) {
+            else if (event.type == SDL_KEYDOWN)
+            {
+                SDL_Keycode k = event.key.keysym.sym;
+
+                // ── Movement (always) ──────────────────────────────────
+                if (k == SDLK_LEFT || k == SDLK_a)
+                {
+                    game.keyLeft = true;
+                    game.keyA = true;
+                }
+                if (k == SDLK_RIGHT || k == SDLK_d)
+                {
+                    game.keyRight = true;
+                    game.keyD = true;
+                }
+                if (k == SDLK_SPACE)
+                    game.keySpace = true;
+                if (k == SDLK_ESCAPE)
+                    running = false;
+
+                // ── Menu: go to difficulty select ──────────────────────
+                if (game.state == GameState::MENU)
+                {
+                    if (k == SDLK_RETURN || k == SDLK_KP_ENTER)
+                        game.state = GameState::DIFF_SELECT;
+                }
+
+                // ── Difficulty select ──────────────────────────────────
+                else if (game.state == GameState::DIFF_SELECT)
+                {
+                    if (k == SDLK_1 || k == SDLK_KP_1)
+                    {
+                        game.difficulty = Difficulty::EASY;
                         startGame(game);
                     }
+                    else if (k == SDLK_2 || k == SDLK_KP_2)
+                    {
+                        game.difficulty = Difficulty::MEDIUM;
+                        startGame(game);
+                    }
+                    else if (k == SDLK_3 || k == SDLK_KP_3)
+                    {
+                        game.difficulty = Difficulty::HARD;
+                        startGame(game);
+                    }
+                    else if (k == SDLK_BACKSPACE)
+                    {
+                        game.state = GameState::MENU;
+                    }
                 }
-                if (k == SDLK_ESCAPE) running = false;
+
+                // ── Game over / victory: restart ───────────────────────
+                else if (game.state == GameState::GAMEOVER ||
+                         game.state == GameState::VICTORY)
+                {
+                    if (k == SDLK_RETURN || k == SDLK_KP_ENTER)
+                        game.state = GameState::DIFF_SELECT;
+                }
             }
-            else if (event.type == SDL_KEYUP) {
+
+            else if (event.type == SDL_KEYUP)
+            {
                 SDL_Keycode k = event.key.keysym.sym;
-                if (k == SDLK_LEFT  || k == SDLK_a) game.keyLeft  = false;
-                if (k == SDLK_RIGHT || k == SDLK_d) game.keyRight = false;
-                if (k == SDLK_a) game.keyA = false;
-                if (k == SDLK_d) game.keyD = false;
-                if (k == SDLK_SPACE) game.keySpace = false;
-            }
-            else if (event.type == SDL_WINDOWEVENT) {
-                // Handle resize — just re-render
+                if (k == SDLK_LEFT || k == SDLK_a)
+                {
+                    game.keyLeft = false;
+                    game.keyA = false;
+                }
+                if (k == SDLK_RIGHT || k == SDLK_d)
+                {
+                    game.keyRight = false;
+                    game.keyD = false;
+                }
+                if (k == SDLK_SPACE)
+                    game.keySpace = false;
             }
         }
 
         // ── Update ────────────────────────────────────────────────────────
-        if (game.state == GameState::MENU || game.state == GameState::GAMEOVER) {
+        if (game.state == GameState::MENU ||
+            game.state == GameState::DIFF_SELECT ||
+            game.state == GameState::GAMEOVER ||
+            game.state == GameState::VICTORY)
+        {
             updateMenuStars(game);
-        } else {
-            updateGame(game);
+        }
+        else
+        {
+            updateGame(game); // handles PLAYING + LEVEL_COMPLETE internally
         }
 
         // ── Render ────────────────────────────────────────────────────────
@@ -116,11 +169,9 @@ int main(int argc, char* argv[]) {
         renderFrame(game, w, h);
         SDL_GL_SwapWindow(window);
 
-        // ── Frame cap (if VSync off) ──────────────────────────────────────
         Uint32 elapsed = SDL_GetTicks() - now;
-        if (elapsed < (Uint32)FRAME_TIME) {
+        if (elapsed < (Uint32)FRAME_TIME)
             SDL_Delay((Uint32)FRAME_TIME - elapsed);
-        }
     }
 
     SDL_GL_DeleteContext(glCtx);

@@ -1,7 +1,3 @@
-# SpaceShooter Makefile (Linux / macOS)
-# Usage:
-#   Linux:  make
-#   macOS:  make PLATFORM=macos
 
 CXX      = g++
 CXXFLAGS = -std=c++17 -O2 -Wall -Iinclude
