@@ -1,30 +1,3 @@
-// =============================================================================
-//  SpaceShooter — OpenGL Renderer
-// =============================================================================
-//
-//  PRIMARY AUTHOR : Mahmudur Rahman
-//                   [ Core Graphics Engine, OpenGL Pipeline ]
-//                   Responsible for all visual rendering:
-//                     - Background, nebula & parallax star field
-//                     - Player ship geometry (hull, wings, cockpit, thrust)
-//                     - Alien saucer (dome, rotating lights, tractor beam)
-//                     - Bullet glow trails (additive blending)
-//                     - Explosion particle system
-//                     - HUD (score, level, lives / hearts)
-//                     - Menu & Game Over overlay screens
-//                     - Pixel-art geometric font (no external library)
-//                     - Letterbox viewport scaling
-//
-//  Project        : Space Shooter C++/OpenGL
-//  File           : src/Renderer.cpp
-//  Description    : Full OpenGL 2.1 fixed-pipeline renderer.
-//                   No shaders, no textures — pure geometry & blending.
-//
-//  Contributors   : Era       (GameLogic.cpp — physics & collision)
-//                   Mitu      (Game.h / Renderer.h — data architecture)
-//                   Tripty    (main.cpp — SDL2 window & game loop)
-//                   PK        (CMakeLists.txt / Makefile — build system)
-// =============================================================================
 
 #include "Renderer.h"
 #include "Game.h"

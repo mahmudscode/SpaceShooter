@@ -1,23 +1,3 @@
-# ==============================================================================
-#  SpaceShooter — CMake Build Configuration
-# ==============================================================================
-#
-#  AUTHOR         : PK
-#                   [ Cross-Platform Build System ]
-#                   Responsible for:
-#                     - CMake project & C++17 standard setup
-#                     - SDL2 package detection (target & legacy fallback)
-#                     - OpenGL package detection
-#                     - Platform-specific flags (Windows / macOS / Linux)
-#                     - WIN32_EXECUTABLE for no console window on Windows
-#                     - Release build optimization flags
-#
-#  Project        : Space Shooter C++/OpenGL
-#  File           : CMakeLists.txt
-#
-#  Prime Author   : Mahmudur Rahman  (Renderer.cpp)
-#  Contributors   : Era (GameLogic) · Mitu (Headers) · Tripty (main.cpp)
-# ==============================================================================
 
 cmake_minimum_required(VERSION 3.10)
 project(SpaceShooter CXX)

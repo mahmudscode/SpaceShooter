@@ -1,13 +1,4 @@
-// =============================================================================
-//  SpaceShooter — Application Entry Point
-// =============================================================================
-//
-//  AUTHOR         : Tripty
-//                   [ SDL2 Window Management & Main Game Loop ]
-//
-//  Prime Author   : Mahmudur Rahman  (Renderer.cpp)
-//  Contributors   : Era (GameLogic.cpp) · Mitu (Game.h) · PK (Build)
-// =============================================================================
+
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>

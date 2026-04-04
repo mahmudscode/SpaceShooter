@@ -1,14 +1,3 @@
-// =============================================================================
-//  SpaceShooter — Game Logic
-// =============================================================================
-//
-//  AUTHOR         : Era
-//                   [ Physics, Collision Detection & Game State ]
-//
-//  Prime Author   : Mahmudur Rahman  (Renderer.cpp)
-//  Contributors   : Mitu (Game.h) · Tripty (main.cpp) · PK (Build)
-// =============================================================================
-
 #include "Game.h"
 #include <cmath>
 #include <algorithm>

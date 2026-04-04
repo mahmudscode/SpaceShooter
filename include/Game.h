@@ -1,13 +1,4 @@
-// =============================================================================
-//  SpaceShooter — Core Data Architecture
-// =============================================================================
-//
-//  AUTHOR         : Mitu
-//                   [ Data Structures & Engine Architecture ]
-//
-//  Prime Author   : Mahmudur Rahman  (Renderer.cpp)
-//  Contributors   : Era (GameLogic.cpp) · Tripty (main.cpp) · PK (Build)
-// =============================================================================
+
 #pragma once
 #include <vector>
 #include <string>
