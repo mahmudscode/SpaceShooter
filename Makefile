@@ -13,6 +13,12 @@ ifeq ($(PLATFORM),macos)
     SDL2_CFLAGS = $(shell sdl2-config --cflags)
     SDL2_LIBS   = $(shell sdl2-config --libs)
     GL_LIBS     = -framework OpenGL
+else ifeq ($(PLATFORM),windows)
+    # Windows (MinGW/MSYS2) - adjust paths if using vcpkg or manual SDL2 install
+    SDL2_CFLAGS = -I"C:/SDL2/include"
+    SDL2_LIBS   = -L"C:/SDL2/lib" -lSDL2 -lSDL2main
+    GL_LIBS     = -lopengl32 -lglu32 -lm
+    TARGET      = SpaceShooter.exe
 else
     SDL2_CFLAGS = $(shell sdl2-config --cflags)
     SDL2_LIBS   = $(shell sdl2-config --libs)
