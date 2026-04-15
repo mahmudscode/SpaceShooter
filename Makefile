@@ -2,7 +2,7 @@
 
 CXX      = g++
 CXXFLAGS = -std=c++17 -O2 -Wall -Iinclude
-TARGET   = SpaceShooter_App
+TARGET   = SpaceShooter
 
 SRCS = src/main.cpp src/GameLogic.cpp src/Renderer.cpp
 OBJS = $(SRCS:.cpp=.o)
